@@ -1,0 +1,35 @@
+trigger:
+- main
+
+pr:
+- '*'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- script: |
+    terraform init
+    terraform apply -auto-approve
+  displayName: 'Terraform Apply'
+  env:
+    ARM_ACCESS_KEY: $(ARM_ACCESS_KEY)
+
+- script: |
+    cd lambda
+    npm install
+    zip -r lambda.zip .
+    aws lambda update-function-code --function-name my-s3-to-kinesis-lambda --zip-file fileb://lambda.zip
+  displayName: 'Update Lambda Function Code'
+  env:
+    AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+    AWS_SECRET_ACCESS_KEY: 4ZxCjMUlmG7yhtxhkraabvckw1BvVfEMS0NfILrQ
+    AWS_DEFAULT_REGION: us-east-1  
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'YourAzureSubscription'
+    scriptType: 'ps'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      # Additional steps or notifications if needed
